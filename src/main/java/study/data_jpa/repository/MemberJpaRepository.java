@@ -49,4 +49,11 @@ public class MemberJpaRepository {
                 .getResultList();
     }
 
+    // NamedQuery를 em.createNamedQuery로 사용하는 경우.
+    public List<Member> findByUsername(String username) {
+        return em.createNamedQuery("Member.findByUsername", Member.class)
+                .setParameter("username", username)
+                .getResultList();
+    }
+
 }

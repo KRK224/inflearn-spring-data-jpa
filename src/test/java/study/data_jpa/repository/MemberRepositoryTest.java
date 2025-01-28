@@ -3,21 +3,28 @@ package study.data_jpa.repository;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Arrays;
 import java.util.List;
-import org.assertj.core.api.Assertions;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
+import study.data_jpa.dto.MemberDto;
 import study.data_jpa.entity.Member;
+import study.data_jpa.entity.Team;
 
 @SpringBootTest
 @Transactional
 @Rollback(false)
 class MemberRepositoryTest {
 
-    @Autowired MemberRepository memberRepository;
+    @Autowired
+    MemberRepository memberRepository;
+    @Autowired
+    TeamRepository teamRepository;
 
     @Test
     public void testMember() {
@@ -82,5 +89,147 @@ class MemberRepositoryTest {
         List<Member> top3HelloBy = memberRepository.findTop3HelloBy();
         assertThat(top3HelloBy.size()).isEqualTo(3);
     }
+
+    @Test
+    public void findByUsername() {
+        Member memberA = new Member("memberA", 10);
+        Member memberB = new Member("memberB", 20);
+        memberRepository.save(memberA);
+        memberRepository.save(memberB);
+
+        List<Member> findMembers = memberRepository.findByUsername("memberA");
+        Member findMember = findMembers.get(0);
+        assertThat(findMember).isEqualTo(memberA);
+    }
+
+    @Test
+    public void findUserTest() throws Exception {
+        //given
+        Member memberA = new Member("AAA", 10);
+        Member memberB = new Member("BBB", 20);
+        memberRepository.save(memberA);
+        memberRepository.save(memberB);
+        //when
+        List<Member> result = memberRepository.findUser("AAA", 10);
+        //then
+        assertThat(result.get(0)).isEqualTo(memberA);
+        assertThat(result.size()).isEqualTo(1);
+    }
+
+    @Test
+    public void findUserNameListTest() throws Exception{
+        //given
+        Member memberA = new Member("AAA", 10);
+        Member memberB = new Member("BBB", 20);
+        memberRepository.save(memberA);
+        memberRepository.save(memberB);
+        //when
+        List<String> usernameList = memberRepository.findUsernameList();
+        //then
+        assertThat(usernameList.size()).isEqualTo(2);
+        assertThat(usernameList).containsExactly("AAA", "BBB");
+    }
+
+    @Test
+    public void findMemberDtoTest() throws Exception{
+        //given
+        Member m1 = new Member("AAA", 10);
+        memberRepository.save(m1);
+
+        Team teamA = new Team("teamA");
+        teamRepository.save(teamA);
+
+        // Dirty Checking으로 감지.
+        m1.changeTeam(teamA);
+        //when
+        // 이 순간에 em.flush를 하기 때문에 changeTeam이 반영된다.
+        List<MemberDto> memberDto = memberRepository.findMemberDto();
+
+        //then
+        for (MemberDto dto : memberDto) {
+            System.out.println("dto.getUsername() = " + dto.getUsername());
+            System.out.println("dto.getTeamName() = " + dto.getTeamName());
+            assertThat(dto.getUsername()).isEqualTo("AAA");
+            assertThat(dto.getTeamName()).isEqualTo("teamA");
+        }
+    }
+
+    @Test
+    public void findByNamesTest() throws Exception{
+        //given
+        Member m1 = new Member("AAA", 10);
+        Member m2 = new Member("BBB", 20);
+        memberRepository.save(m1);
+        memberRepository.save(m2);
+
+        //when
+        List<Member> byNames = memberRepository.findByNames(Arrays.asList("AAA", "BBB"));
+
+        //then
+        for (Member member : byNames) {
+            System.out.println("member = " + member);
+        }
+    }
+
+    @Test
+    public void returnTypeTest() throws Exception{
+        //given
+        Member m1 = new Member("AAA", 10);
+        Member m2 = new Member("BBB", 20);
+        memberRepository.save(m1);
+        memberRepository.save(m2);
+        //when
+        // List로 반환
+        List<Member> results = memberRepository.findListByUsername("AAA");
+        results.forEach(System.out::println);
+        // 단건으로 반환
+        Member findMember = memberRepository.findMemberByUsername("AAA");
+        System.out.println("findMember = " + findMember);
+        // Optional로 반환
+        Optional<Member> optional = memberRepository.findOptionalByUsername("AAA");
+        optional.ifPresent(member -> System.out.println("optional.get() = " + member));
+        //then
+    }
+
+    // Junit4
+//    @Test(expected = IncorrectResultSizeDataAccessException.class)
+    @Test
+    public void returnTypeFailTest() throws Exception{
+        //given
+        Member m1 = new Member("AAA", 10);
+        Member m2 = new Member("BBB", 20);
+        Member m3 = new Member("BBB", 30);
+        memberRepository.save(m1);
+        memberRepository.save(m2);
+        memberRepository.save(m3);
+        //when
+        // List로 반환
+        List<Member> difekj = memberRepository.findListByUsername("difekj");
+        // List로 반환할 시에 데이터가 없으면 Null이 아니라 Empty Collection을 반환한다.
+        System.out.println("difekj.size() = " + difekj.size());
+
+        // 단건 반환
+        /*
+         ** 이 경우에는 순수 JPA에서는 No Result Exception이 발생하지만,
+         * Spring Data JPA에서 내부적으로 try catch 처리 후 null 반환.
+         */
+        Member findMember = memberRepository.findMemberByUsername("akdfjeij");
+        System.out.println("findMember = " + findMember); // null 반환.
+
+        // Optional로 반환
+        Optional<Member> optional = memberRepository.findOptionalByUsername("akdfjeij");
+        System.out.println("optional.isEmpty() = " + optional.isEmpty());
+
+        // Exception 발생
+        /**
+         * 순수 JPA에서는 NonUniqueResultException이 발생하지만,
+         * Spring Data JPA에서는 Spring 예외로 추상화 한 IncorrectResultSizeDataAccessException 발생.
+         */
+        assertThrows(IncorrectResultSizeDataAccessException.class, () -> {
+            memberRepository.findMemberByUsername("BBB");
+        });
+
+    }
+
 
 }
