@@ -7,4 +7,8 @@ import study.data_jpa.entity.Member;
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
     List<Member> findByUsernameAndAgeGreaterThan(String username, int age);
+
+    // Query Method 1) Method Name Query
+    // Top~ scrolling, By~ search condition
+    List<Member> findTop3HelloBy();
 }

@@ -69,4 +69,18 @@ class MemberRepositoryTest {
         assertThat(result.size()).isEqualTo(1);
     }
 
+    @Test
+    public void findTop3HelloByTest() {
+        Member memberA = new Member("AAA", 10);
+        Member memberB = new Member("BBB", 20);
+        Member memberC = new Member("CCC", 30);
+        Member memberD = new Member("DDD", 40);
+        memberRepository.save(memberA);
+        memberRepository.save(memberB);
+        memberRepository.save(memberC);
+        memberRepository.save(memberD);
+        List<Member> top3HelloBy = memberRepository.findTop3HelloBy();
+        assertThat(top3HelloBy.size()).isEqualTo(3);
+    }
+
 }
