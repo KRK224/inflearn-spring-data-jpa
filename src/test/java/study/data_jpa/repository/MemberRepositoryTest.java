@@ -303,7 +303,7 @@ class MemberRepositoryTest {
     }
 
     @Test
-    public void bulkUpdatetest() throws Exception{
+    public void bulkUpdatetest() throws Exception {
         //given
         memberRepository.save(new Member("member1", 10));
         memberRepository.save(new Member("member2", 19));
@@ -319,6 +319,39 @@ class MemberRepositoryTest {
 
         //then
         assertThat(resultCnt).isEqualTo(3);
+    }
+
+    @Test
+    public void findMemberLazy() throws Exception {
+        //given
+        Team teamA = new Team("teamA");
+        Team teamB = new Team("teamB");
+        teamRepository.save(teamA);
+        teamRepository.save(teamB);
+        memberRepository.save(new Member("member1", 10, teamA));
+        memberRepository.save(new Member("member2", 20, teamB));
+
+        em.flush();
+        em.clear();
+        //when
+        // 공통 메서드 오버라이드 EntityGraph 추가
+//        List<Member> members = memberRepository.findAll();
+
+        // JPQL + EntityGraph
+        List<Member> members = memberRepository.findMemberEntityGraph();
+
+        //JPQL + NamedEntityGraph
+//        List<Member> namedEntityGraph = memberRepository.findNamedEntityGraph();
+
+        // 메서드 이름 쿼리 + EntityGraph
+//        List<Member> member1 = memberRepository.findEntityGraphByUsername("member1");
+
+        //then
+        for (Member member : members) {
+            System.out.println("member.getUsername() = " + member.getUsername());
+            // N+1 문제 발생.
+            System.out.println("member.getTeam().getName() = " + member.getTeam().getName());
+        }
     }
 
 }
