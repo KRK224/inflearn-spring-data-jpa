@@ -29,7 +29,7 @@ import lombok.ToString;
 )
 @NamedEntityGraph(name = "Member.all",
         attributeNodes = @NamedAttributeNode("team")) // JPA 표준.
-public class Member {
+public class Member extends JpaBaseEntity {
     @Id
     @GeneratedValue
     @Column(name = "member_id")
