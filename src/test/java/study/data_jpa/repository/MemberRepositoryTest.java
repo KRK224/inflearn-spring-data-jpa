@@ -10,6 +10,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.data_jpa.dto.MemberDto;
@@ -117,7 +122,7 @@ class MemberRepositoryTest {
     }
 
     @Test
-    public void findUserNameListTest() throws Exception{
+    public void findUserNameListTest() throws Exception {
         //given
         Member memberA = new Member("AAA", 10);
         Member memberB = new Member("BBB", 20);
@@ -131,7 +136,7 @@ class MemberRepositoryTest {
     }
 
     @Test
-    public void findMemberDtoTest() throws Exception{
+    public void findMemberDtoTest() throws Exception {
         //given
         Member m1 = new Member("AAA", 10);
         memberRepository.save(m1);
@@ -155,7 +160,7 @@ class MemberRepositoryTest {
     }
 
     @Test
-    public void findByNamesTest() throws Exception{
+    public void findByNamesTest() throws Exception {
         //given
         Member m1 = new Member("AAA", 10);
         Member m2 = new Member("BBB", 20);
@@ -172,7 +177,7 @@ class MemberRepositoryTest {
     }
 
     @Test
-    public void returnTypeTest() throws Exception{
+    public void returnTypeTest() throws Exception {
         //given
         Member m1 = new Member("AAA", 10);
         Member m2 = new Member("BBB", 20);
@@ -194,7 +199,7 @@ class MemberRepositoryTest {
     // Junit4
 //    @Test(expected = IncorrectResultSizeDataAccessException.class)
     @Test
-    public void returnTypeFailTest() throws Exception{
+    public void returnTypeFailTest() throws Exception {
         //given
         Member m1 = new Member("AAA", 10);
         Member m2 = new Member("BBB", 20);
@@ -228,8 +233,71 @@ class MemberRepositoryTest {
         assertThrows(IncorrectResultSizeDataAccessException.class, () -> {
             memberRepository.findMemberByUsername("BBB");
         });
-
     }
+
+    @Test
+    public void paging() throws Exception {
+        //given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 10));
+        memberRepository.save(new Member("member3", 10));
+        memberRepository.save(new Member("member4", 10));
+        memberRepository.save(new Member("member5", 10));
+
+        int age = 10, offset = 0, limit = 3;
+
+        PageRequest pageRequest = PageRequest.of(offset, limit, Sort.by(Direction.DESC, "username"));
+
+        //when
+        Page<Member> page = memberRepository.findByAge(age, pageRequest);
+
+        // Entity -> DTO로 반환
+        // 이대로 Page<Dto> 형식으로 controller로 반환해도 가능.
+        Page<MemberDto> dtoMap = page.map(m -> new MemberDto(m.getId(), m.getUsername(), null));
+
+
+        long totalElements = page.getTotalElements();
+        List<Member> content = page.getContent();
+
+        //then
+        for (Member member : content) {
+            System.out.println("member = " + member);
+        }
+
+        assertThat(totalElements).isEqualTo(5);
+        assertThat(content.size()).isEqualTo(3);
+        assertThat(page.getNumber()).isEqualTo(0);
+        assertThat(page.getTotalPages()).isEqualTo(2);
+        assertThat(page.isFirst()).isTrue();
+        assertThat(page.hasNext()).isTrue();
+    }
+
+    @Test
+    public void pagingBySlice() throws Exception {
+        //given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 10));
+        memberRepository.save(new Member("member3", 10));
+        memberRepository.save(new Member("member4", 10));
+        memberRepository.save(new Member("member5", 10));
+
+        int age = 10, offset = 0, limit = 3;
+
+        PageRequest pageRequest = PageRequest.of(offset, limit, Sort.by(Direction.DESC, "username"));
+
+        //when
+        Slice<Member> slice = memberRepository.findSliceByAge(age, pageRequest);
+        List<Member> content = slice.getContent();
+
+        //then
+        for (Member member : content) {
+            System.out.println("member = " + member);
+        }
+        assertThat(slice.getNumber()).isEqualTo(0);
+        assertThat(slice.hasNext()).isTrue();
+        assertThat(slice.isFirst()).isTrue();
+    }
+
 
 
 }

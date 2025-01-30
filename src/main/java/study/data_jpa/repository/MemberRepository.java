@@ -2,6 +2,9 @@ package study.data_jpa.repository;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -37,4 +40,17 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     List<Member> findListByUsername(String username);
     Member findMemberByUsername(String username);
     Optional<Member> findOptionalByUsername(String username);
+
+    // Paging
+    // 반환 타입이 Page인 경우, count 쿼리까지 자동으로 실행한다.
+    // count 쿼리에 대해서 성능 최적화를 countQuery를 통해 할 수 있다.
+    /**
+     * @param age
+     * @param pageable
+     * @return
+     */
+    @Query(value= "select m from Member m left join m.team t",
+            countQuery = "select count(m) from Member m")
+    Page<Member> findByAge(int age, Pageable pageable);
+    Slice<Member> findSliceByAge(int age, Pageable pageable);
 }
