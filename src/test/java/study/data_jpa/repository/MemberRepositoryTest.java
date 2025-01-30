@@ -354,4 +354,27 @@ class MemberRepositoryTest {
         }
     }
 
+    @Test
+    public void queryHint() throws Exception{
+        //given
+        memberRepository.save(new Member("member1", 10));
+        em.flush(); // 영속성 컨텍스트의 변경 사항을 DB에 동기화하는 작업, 영속성 컨텍스트를 초기화X
+        em.clear(); // 영속성 컨텍스트 초기화 O
+        //when
+        // queryHints 로 readOnly 옵션을 주면, 비교를 위한 Snapshot 자체를 생성하지 않는다.
+        // em.flush도 무시.
+        // @Transactional(readOnly = true)와 동일
+        Member member1 = memberRepository.findReadOnlyByUsername("member1");
+        Long id = member1.getId();
+        member1.setUsername("member2");
+        // 업데이트 쿼리가 나가지 않는다.
+        em.flush();
+        em.clear();
+
+        //then
+        Member member = memberRepository.findById(id).get();
+        System.out.println("member.getUsername() = " + member.getUsername());
+        assertThat(member.getUsername()).isEqualTo("member1");
+    }
+
 }
