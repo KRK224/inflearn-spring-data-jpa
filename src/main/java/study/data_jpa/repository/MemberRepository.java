@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import study.data_jpa.dto.MemberDto;
@@ -20,7 +21,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     List<Member> findTop3HelloBy();
 
     // Query Method 2) Named Query using @Query
-    @Query(name = "Member.findByUsername") // 기본적으로 NamedQuery를 Entity.Method명으로 찾기 때문에 생략 가능.
+    @Query(name = "Member.findByUsername")
+    // 기본적으로 NamedQuery를 Entity.Method명으로 찾기 때문에 생략 가능.
     List<Member> findByUsername(@Param("username") String username);
 
     // Query Method 3) using @Query
@@ -38,19 +40,29 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     // Spring Data JPA에서는 다양한 반환 타입을 제공한다.
     List<Member> findListByUsername(String username);
+
     Member findMemberByUsername(String username);
+
     Optional<Member> findOptionalByUsername(String username);
 
     // Paging
     // 반환 타입이 Page인 경우, count 쿼리까지 자동으로 실행한다.
     // count 쿼리에 대해서 성능 최적화를 countQuery를 통해 할 수 있다.
+
     /**
      * @param age
      * @param pageable
      * @return
      */
-    @Query(value= "select m from Member m left join m.team t",
+    @Query(value = "select m from Member m left join m.team t",
             countQuery = "select count(m) from Member m")
     Page<Member> findByAge(int age, Pageable pageable);
+
     Slice<Member> findSliceByAge(int age, Pageable pageable);
+
+    // Bulk Update
+    // Modifying 어노테이션을 활용해야 executeUpdate()를 실행한다.
+    @Modifying(clearAutomatically = true)
+    @Query("update Member m set m.age = m.age +1 where m.age >= :age")
+    int bulkUpdate(@Param("age") int age);
 }

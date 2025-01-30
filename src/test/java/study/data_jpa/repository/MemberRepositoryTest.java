@@ -3,6 +3,7 @@ package study.data_jpa.repository;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+import jakarta.persistence.EntityManager;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +31,9 @@ class MemberRepositoryTest {
     MemberRepository memberRepository;
     @Autowired
     TeamRepository teamRepository;
+    // bulkUpdate 이후에 영속성 context를 초기화 하기 위해.
+    @Autowired
+    EntityManager em;
 
     @Test
     public void testMember() {
@@ -298,6 +302,23 @@ class MemberRepositoryTest {
         assertThat(slice.isFirst()).isTrue();
     }
 
+    @Test
+    public void bulkUpdatetest() throws Exception{
+        //given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 19));
+        memberRepository.save(new Member("member3", 20));
+        memberRepository.save(new Member("member4", 30));
+        memberRepository.save(new Member("member5", 40));
 
+        //when
+        int resultCnt = memberRepository.bulkUpdate(20);
+//        em.clear(); # @Modifying(clearAutomatically = true) 옵션으로 자동 적용.
+        List<Member> member5 = memberRepository.findByUsername("member5");
+        System.out.println("member5.get(0).getAge() = " + member5.get(0).getAge());
+
+        //then
+        assertThat(resultCnt).isEqualTo(3);
+    }
 
 }

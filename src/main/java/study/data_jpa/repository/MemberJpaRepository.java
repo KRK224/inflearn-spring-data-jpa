@@ -70,4 +70,11 @@ public class MemberJpaRepository {
                 .getSingleResult();
     }
 
+    public int bulkUpdate(int age) {
+        return em.createQuery("update Member m set m.age = m.age + 1" +
+                        "where age >= :age")
+                .setParameter("age", age)
+                .executeUpdate();
+    }
+
 }
