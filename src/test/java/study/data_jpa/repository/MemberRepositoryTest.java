@@ -355,7 +355,7 @@ class MemberRepositoryTest {
     }
 
     @Test
-    public void queryHint() throws Exception{
+    public void queryHint() throws Exception {
         //given
         memberRepository.save(new Member("member1", 10));
         em.flush(); // 영속성 컨텍스트의 변경 사항을 DB에 동기화하는 작업, 영속성 컨텍스트를 초기화X
@@ -375,6 +375,20 @@ class MemberRepositoryTest {
         Member member = memberRepository.findById(id).get();
         System.out.println("member.getUsername() = " + member.getUsername());
         assertThat(member.getUsername()).isEqualTo("member1");
+    }
+
+    @Test
+    public void findMemberCustomTest() throws Exception {
+        //given
+        Member member1 = new Member("member1", 10);
+        Member member2 = new Member("member2", 20);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+        //when
+        List<Member> result = memberRepository.findMemberCustom();
+
+        //then
+        assertThat(result.size()).isEqualTo(2);
     }
 
 }
