@@ -3,7 +3,6 @@ package study.data_jpa.entity;
 import static jakarta.persistence.FetchType.LAZY;
 import static lombok.AccessLevel.PROTECTED;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -29,7 +28,7 @@ import lombok.ToString;
 )
 @NamedEntityGraph(name = "Member.all",
         attributeNodes = @NamedAttributeNode("team")) // JPA 표준.
-public class Member extends JpaBaseEntity {
+public class Member extends BaseEntity {
     @Id
     @GeneratedValue
     @Column(name = "member_id")
