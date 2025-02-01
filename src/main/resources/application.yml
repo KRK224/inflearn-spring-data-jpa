@@ -12,6 +12,12 @@ spring:
         #show_sql: true #System.out.println으로 쿼리 확인
         format_sql: true
 
+  data:
+    web:
+      pageable:
+        default-page-size: 10
+        max-page-size: 100
+
 logging.level:
   org.hibernate.SQL: debug
 #  org.hibernate.type: trace # 파라미터 확인
