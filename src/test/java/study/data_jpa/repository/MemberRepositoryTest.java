@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -390,5 +392,40 @@ class MemberRepositoryTest {
         //then
         assertThat(result.size()).isEqualTo(2);
     }
+
+    @Test
+    public void queryByExample() throws Exception{
+        //given
+        Team teamA = new Team("teamA");
+        em.persist(teamA);
+
+        Member member1 = new Member("m1", 10, teamA);
+        Member member2 = new Member("m2", 10, teamA);
+        em.persist(member1);
+        em.persist(member2);
+
+        em.flush();
+        em.clear();
+        //when
+        // Probe 생성
+        Member member = new Member("m1");
+        // inner join 가능, 그러나 left join은 불가능.
+        Team teamExample = new Team("teamA");
+        member.setTeam(teamExample);
+
+        // primitive 타입의 기본값은 0이기 때문에 자동으로 검색되는 것을
+        // 막기 위해 ExampleMatcher 사용.
+        ExampleMatcher matcher = ExampleMatcher.matching()
+                .withIgnorePaths("age");
+
+        Example<Member> example = Example.of(member, matcher);
+
+        List<Member> members = memberRepository.findAll(example);
+
+        assertThat(members.get(0).getUsername()).isEqualTo("m1");
+
+        //then
+    }
+
 
 }
