@@ -93,4 +93,21 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
     // QueryHints
     @QueryHints(value = {@QueryHint(name = "org.hibernate.readOnly", value = "true")})
     Member findReadOnlyByUsername(String username);
+
+    List<UserNameOnly> findProjectionByUsername(String username);
+
+    List<UsernameOnlyDto> findProjectionDtoByUsername(String username);
+
+    <T> List<T> findDynamicProjectByUsername(String username, Class<T> type);
+
+    List<NestedClosedProjection> findNestedClosedProjectionByUsername(String username);
+
+    @Query(value = "select * from member where username = ?", nativeQuery = true)
+    Member findByNativeQuery(String username);
+
+    @Query(value = "select m.member_id as id, m.username, t.name as teamName " +
+    "from member m left join team t on m.fk_team_id = t.team_id",
+    countQuery = "select count(*) from member",
+    nativeQuery = true)
+    Page<MemberProjection> findByNativeProjection(Pageable pageable);
 }
